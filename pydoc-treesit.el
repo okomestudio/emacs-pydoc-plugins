@@ -131,9 +131,8 @@ When not given, PATH defaults to the value of function `buffer-file-name'."
          `(,(pydoc-treesit--fully-qualify-path (treesit-node-text m))
            ,(treesit-node-text a)))))))
 
-(defun pydoc-treesit-resolve-to-full-path (node)
+(defun pydoc-treesit--resolve-to-full-path (node)
   "Resolve treesit NODE to the full path."
-  (interactive)
   (if-let* ((parts (pydoc-treesit--path-to-identifier node)))
       (let* ((tot (length parts))
              (len tot)
@@ -152,7 +151,7 @@ When not given, PATH defaults to the value of function `buffer-file-name'."
   "Get help for a Python object at point using `treesit'."
   (interactive)
   (if (derived-mode-p '(python-ts-mode))
-      (let ((s (pydoc-treesit-resolve-to-full-path (treesit-node-at (point)))))
+      (let ((s (pydoc-treesit--resolve-to-full-path (treesit-node-at (point)))))
         (pydoc s))
     (message "Not in `python-ts-mode'")))
 
