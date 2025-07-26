@@ -34,5 +34,5 @@ This repository includes the `pydoc-names` extension. After loading the package,
 (require 'pydoc-names)
 ```
 
-invoking `pydoc` will include all Python object names available within the current virtual
-environment.
+invoking `pydoc` will include as candidates all Python object names available within the
+current virtual environment. To refresh candiates, invoke `pydoc` with a prefix argument.
