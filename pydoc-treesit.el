@@ -46,6 +46,45 @@
                   `(,identifier))
         `(,identifier)))))
 
+(defun pydoc-treesit--package-root (&optional path)
+  "Search upward from PATH for the Python package root directory.
+When not given, PATH defaults to the value of function `buffer-file-name'."
+  (let* ((dir (or path (file-name-directory (buffer-file-name))))
+         (init-file (expand-file-name "__init__.py" dir)))
+    (cond
+     ((and (file-exists-p init-file)
+           (not (let ((parent (file-name-directory (directory-file-name dir))))
+                  (and (not (equal parent dir))
+                       (file-exists-p (expand-file-name "__init__.py" parent))))))
+      ;; `dir' is at the top-level package.
+      (directory-file-name dir))
+     (t
+      (let ((parent (file-name-directory (directory-file-name dir))))
+        (when (not (equal parent dir))
+          (pydoc-treesit--package-root parent)))))))
+
+(defun pydoc-treesit--fully-qualify-path (path)
+  "Fully resolve Python module PATH when given relatively."
+  (if-let*
+      ((num-dots (if (string-match "\\`\\.+\\b" path)
+                     (length (match-string 0 path))))
+       (package-root (pydoc-treesit--package-root))
+       (module-path-comps
+        (seq-remove
+         (lambda (it) (string= it ""))
+         `(,(file-name-nondirectory (directory-file-name package-root))
+           ,@(string-split
+              (string-remove-prefix
+               package-root
+               (directory-file-name (file-name-directory (buffer-file-name))))
+              (regexp-opt (list "/" "\\"))))))
+       (module-path (string-join (butlast module-path-comps (1- num-dots))
+                                 ".")))
+      (if (eq num-dots (length path))
+          module-path
+        (concat module-path "." (substring path num-dots)))
+    path))
+
 (defvar pydoc-treesit--import-query
   '((import_statement
      name: [(dotted_name (identifier) @name-1)
@@ -53,7 +92,8 @@
              name: (dotted_name (identifier) @name-1-with-alias)
              alias: (identifier) @alias-1)])
     (import_from_statement
-     module_name: (dotted_name (identifier) @module-2)
+     module_name: [(relative_import (_) @module-relative-2)
+                   (dotted_name (identifier) @module-2)]
      name: [(dotted_name (identifier) @name-2)
             (aliased_import
              name: (dotted_name (identifier) @name-2-with-alias)
@@ -81,13 +121,15 @@
        (let* ((p (treesit-node-parent c))
               (q (treesit-node-parent p))
               (m (treesit-node-child-by-field-name q "module_name")))
-         `(,(treesit-node-text m) ,(treesit-node-text c))))
+         `(,(pydoc-treesit--fully-qualify-path (treesit-node-text m))
+           ,(treesit-node-text c))))
       ('alias-2
        (let* ((p (treesit-node-parent c))
               (a (treesit-node-child-by-field-name p "name"))
               (q (treesit-node-parent p))
               (m (treesit-node-child-by-field-name q "module_name")))
-         `(,(treesit-node-text m) ,(treesit-node-text a)))))))
+         `(,(pydoc-treesit--fully-qualify-path (treesit-node-text m))
+           ,(treesit-node-text a)))))))
 
 (defun pydoc-treesit-resolve-to-full-path (node)
   "Resolve treesit NODE to the full path."
