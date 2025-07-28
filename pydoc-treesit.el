@@ -10,18 +10,18 @@
 ;;
 ;;; License:
 ;;
-;; This program is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation, either version 3 of the License, or
-;; (at your option) any later version.
+;; This program is free software; you can redistribute it and/or modify it under
+;; the terms of the GNU General Public License as published by the Free Software
+;; Foundation, either version 3 of the License, or (at your option) any later
+;; version.
 ;;
-;; This program is distributed in the hope that it will be useful,
-;; but WITHOUT ANY WARRANTY; without even the implied warranty of
-;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-;; GNU General Public License for more details.
+;; This program is distributed in the hope that it will be useful, but WITHOUT
+;; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+;; FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+;; details.
 ;;
-;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <https://www.gnu.org/licenses/>.
+;; You should have received a copy of the GNU General Public License along with
+;; this program. If not, see <https://www.gnu.org/licenses/>.
 ;;
 ;;; Commentary:
 ;;
@@ -100,11 +100,13 @@ When not given, PATH defaults to the value of function `buffer-file-name'."
              alias: (identifier) @alias-2)]))
   "Queries for Python import statements.")
 
-(defun pydoc-treesit--prefix-match-import-path (prefix)
-  "Given an import PREFIX, return a matching import path."
+(defun pydoc-treesit--partial-match-import-path (identifier)
+  "Given an IDENTIFIER, return a matching import path.
+IDENTIFIER may be a qualified name (i.e., dotted name). In that case, prefix
+matching is performed against imported names."
   (let* ((capture (cl-find-if
                    (lambda (c)
-                     (and (equal (treesit-node-text (cdr c)) prefix)
+                     (and (equal (treesit-node-text (cdr c)) identifier)
                           (cdr c)))
                    (treesit-query-capture (treesit-buffer-root-node)
                                           pydoc-treesit--import-query)))
@@ -138,7 +140,7 @@ When not given, PATH defaults to the value of function `buffer-file-name'."
              (len tot)
              matched)
         (while (not (or matched (eq len 0)))
-          (setq matched (pydoc-treesit--prefix-match-import-path
+          (setq matched (pydoc-treesit--partial-match-import-path
                          (string-join (take len parts) ".")))
           (when matched
             (setq matched (append matched (last parts (- tot len)))))
