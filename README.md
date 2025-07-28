@@ -28,11 +28,22 @@ Use `pydoc-treesit-at-point` in place of `pydoc-at-point` to use the `treesit` v
 
 ## The `pydoc-names` extension
 
-This repository includes the `pydoc-names` extension. After loading the package,
+This repository includes the `pydoc-names` extension. It extends the `pydoc` function to
+include as candidates all names -- including submodules, classes, and functions, etc. --
+from Python packages within the active (virtual) environment. By default, `pydoc` only
+lists top-level modules for match.
+
+To use the extension, add the following lines to the `use-package` form:
 
 ``` emacs-lisp
-(require 'pydoc-names)
+(use-package pydoc-treesit
+  ...
+  :config
+  (add-to-list 'load-path
+               (expand-file-name "pydoc-treesit/extensions"
+                                 package-user-dir))
+  (require 'pydoc-names))
 ```
 
-invoking `pydoc` will include as candidates all Python object names available within the
-current virtual environment. To refresh candiates, invoke `pydoc` with a prefix argument.
+The candidates are parsed and persisted to a cache file. The cache won't be updated on
+code modification. Invoking `pydoc` with a prefix argument forces refresh.
