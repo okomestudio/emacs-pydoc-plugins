@@ -145,8 +145,16 @@ matching is performed against imported names."
           (when matched
             (setq matched (append matched (last parts (- tot len)))))
           (setq len (1- len)))
-        (string-join (or matched parts) "."))
-    (message "No valid identifier at point")))
+        (string-join
+         (if matched
+             matched
+           (append (list (pydoc-treesit--fully-qualify-path ".")
+                         (file-name-sans-extension
+                          (file-name-nondirectory (buffer-file-name))))
+                   parts))
+         "."))
+    ;; The non-identifier node here is likely a keyword.
+    (treesit-node-text node)))
 
 ;;;###autoload
 (defun pydoc-treesit-at-point ()
