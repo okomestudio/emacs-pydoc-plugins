@@ -76,7 +76,6 @@ i.e., `pydoc' is invoked interactively with a prefix argument.
 When ASYNC is non-nil, the shell process for the inspection process runs
 asynchronously. In this mode, the function will not return the list of module
 paths and return nil instead."
-  (interactive "P")
   (let* ((proj-dir (or (pydoc-names--project-root) "~/"))
          (pydoc-names-file (file-name-concat proj-dir ".pydoc-names"))
          (here (file-name-directory (symbol-file 'pydoc-names)))
@@ -99,10 +98,15 @@ invoked interactively with a prefix argument."
       (apply fun `(,reload))
     (if (and (not reload) *pydoc-all-modules*)
         *pydoc-all-modules*
-      (let ((getters '(pydoc-names-collector)))
-        (setq *pydoc-all-modules*
-              (delete-dups (sort (apply #'append (mapcar #'funcall getters))
-                                 #'string<)))))))
+      (setq *pydoc-all-modules*
+            (delete-dups (sort (append (pydoc-topics)
+	                                     (pydoc-keywords)
+	                                     (pydoc-builtin-objects)
+	                                     (pydoc-builtin-modules)
+	                                     (pydoc-user-modules)
+	                                     (pydoc-pkg-modules)
+                                       (pydoc-names-collector reload))
+                               #'string<))))))
 
 (advice-add #'pydoc-all-modules :around #'pydoc-names-all-modules)
 

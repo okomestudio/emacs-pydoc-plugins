@@ -27,4 +27,5 @@ active (virtual) environment. (In contrast, `pydoc` by default only lists top-le
 modules for match.)
 
 The candidates are parsed and persisted to a cache file. The cache won't be updated on
-code modification. Invoking `pydoc` with a prefix argument forces refresh.
+code modification. Invoking the interactive function `pydoc` with a prefix argument forces
+refresh.
